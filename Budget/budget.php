@@ -32,6 +32,6 @@ $mL = array(
 parse_str($query, $output);
 echo '<h2>' . $mL[$output['month'] - 1] . ' ' . $output['year'] . '</h2>';
 
-echo draw_calendar(1,2,$output['month'],$output['year']);
+echo draw_calendar(1,1,$output['month'],$output['year']);
 ?>
 </body></html>

@@ -1,7 +1,14 @@
 <?php
-
 /* draws a calendar */
-function draw_calendar($month,$year){
+function draw_calendar($budgetId,$calendarType,$month,$year){
+
+	$url='localhost:3306';
+	$username='root';
+	$password='wolftrain';
+	$conn=mysqli_connect($url,$username,$password,"wolfbudget");
+	if(!$conn){
+	die('Could not Connect My Sql:' .mysql_error());
+	}	
 
 	/* draw table */
 	$calendar = '<table cellpadding="0" cellspacing="0" class="calendar">';
@@ -29,11 +36,28 @@ function draw_calendar($month,$year){
 	/* keep going with days.... */
 	for($list_day = 1; $list_day <= $days_in_month; $list_day++):
 		$calendar.= '<td class="calendar-day">';
-			/* add in the day number */
-			$calendar.= '<div class="day-number">'.$list_day.'</div>';
 
-			/** QUERY THE DATABASE FOR AN ENTRY FOR THIS DAY !!  IF MATCHES FOUND, PRINT THEM !! **/
-			$calendar.= str_repeat('<p>something goes here</p>',1);
+		/* add in the day number */
+		$calendar.= '<div class="day-number">'.$list_day.'</div>';
+		$proc = "CALL showmonthbudget (" . $budgetId . ", " .$calendarType . ", " . $year . ", " . $month . ", " . $list_day .");";
+		
+		mysqli_more_results($conn);
+
+		$result = mysqli_query($conn,$proc, MYSQLI_USE_RESULT);
+		/** QUERY THE DATABASE FOR AN ENTRY FOR THIS DAY !!  IF MATCHES FOUND, PRINT THEM !! **/
+		if ($result) {
+			$calendar.= '<table>';
+			while($row = mysqli_fetch_array($result)) {
+				$calendar.= '<tr><td>' . $row["Description"] . '</td><td>' . $row["Amount"] . '</td></tr>';
+			}
+			mysqli_more_results($conn);
+			mysqli_next_result($conn);
+			$calendar.= '</table>';
+			
+		} else {
+			$calendar.= '<p>CALL failed: (' . $conn->errno . ') ' . $conn->error . '</p>';
+		}
+		$result = array();
 			
 		$calendar.= '</td>';
 		if($running_day == 6):
@@ -46,6 +70,7 @@ function draw_calendar($month,$year){
 		endif;
 		$days_in_this_week++; $running_day++; $day_counter++;
 	endfor;
+	mysqli_close($conn); 
 
 	/* finish the rest of the days in the week */
 	if($days_in_this_week < 8):
